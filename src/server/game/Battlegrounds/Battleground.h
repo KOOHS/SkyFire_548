@@ -211,7 +211,10 @@ enum ScoreType
     SCORE_SECONDARY_OBJECTIVES  = 17,
     //SOTA
     SCORE_DESTROYED_DEMOLISHER  = 18,
-    SCORE_DESTROYED_WALL        = 19
+    SCORE_DESTROYED_WALL        = 19,
+
+    // Arenas MSG_PVP_LOG_DATA
+    SCORE_RATING_CHANGE         = 20
 };
 
 
@@ -259,7 +262,7 @@ enum BGHonorMode
 struct BattlegroundScore
 {
     BattlegroundScore() : KillingBlows(0), Deaths(0), HonorableKills(0), BonusHonor(0),
-        DamageDone(0), HealingDone(0)
+        DamageDone(0), HealingDone(0), RatingChange(0)
     { }
 
     virtual ~BattlegroundScore() { }                        //virtual destructor is used when deleting score from scores map
@@ -270,6 +273,7 @@ struct BattlegroundScore
     uint32 BonusHonor;
     uint32 DamageDone;
     uint32 HealingDone;
+    int32 RatingChange;
 };
 
 #define BG_AWARD_ARENA_POINTS_MIN_LEVEL 71

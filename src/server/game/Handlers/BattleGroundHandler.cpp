@@ -713,16 +713,37 @@ void WorldSession::HandleBattlemasterJoinArena(WorldPacket& recvData)
     if (grp->GetLeaderGUID() != _player->GetGUID())
         return;
 
-    
-    uint32 ateamId = _player->GetArenaTeamId(arenaslot);
-    // check real arenateam existence only here (if it was moved to group->CanJoin .. () then we would ahve to get it twice)
+
+    uint32 ateamId = grp->GetLowGUID(); //GetArenaTeamId(arenaslot);
     ArenaTeam* at = sArenaTeamMgr->GetArenaTeamById(ateamId);
     if (!at)
     {
-        _player->GetSession()->SendNotInArenaTeamPacket(arenatype);
-        return;
+        at = new ArenaTeam;
+
+        
+
+        if (!at->Create(grp, GUID_LOPART(_player->GetGUID()), arenatype, "", 0, 0, 0, 0, 0))
+        {
+            SF_LOG_ERROR("bg.arena", "Arena team create failed.");
+            delete at;
+            return;
+        }
+
+        //Add/Update Member
+        for (GroupReference* itr = grp->GetFirstMember(); itr != NULL; itr = itr->next())
+        {
+            Player* member = itr->GetSource();
+            if (!member || member->GetGUID() == grp->GetLeaderGUID())
+                continue;
+
+            if (!at->AddMember(member->GetGUID(), ateamId))
+            {
+                SF_LOG_ERROR("bg.arena", "Arena team member create failed.");
+                return;
+            }
+        }
     }
-    
+
     // get the team rating for queueing
     arenaRating = at->GetRating();
     matchmakerRating = at->GetAverageMMR(grp);

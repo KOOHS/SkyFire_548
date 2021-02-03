@@ -808,8 +808,6 @@ void Battleground::EndBattleground(uint32 winner)
     }
 
     bool guildAwarded = false;
-    WorldPacket pvpLogData;
-    sBattlegroundMgr->BuildPvpLogDataPacket(&pvpLogData, this);
 
     BattlegroundQueueTypeId bgQueueTypeId = BattlegroundMgr::BGQueueTypeId(GetTypeID(), GetArenaType());
 
@@ -867,10 +865,13 @@ void Battleground::EndBattleground(uint32 winner)
                 player->ModifyCurrency(CURRENCY_TYPE_CONQUEST_META_ARENA, sWorld->getIntConfig(WorldIntConfigs::CONFIG_CURRENCY_CONQUEST_POINTS_ARENA_REWARD));
 
                 winnerArenaTeam->MemberWon(player, loserMatchmakerRating, winnerMatchmakerChange);
+                UpdatePlayerScore(player, SCORE_RATING_CHANGE, winnerMatchmakerChange, false);
+
             }
             else
             {
                 loserArenaTeam->MemberLost(player, winnerMatchmakerRating, loserMatchmakerChange);
+                UpdatePlayerScore(player, SCORE_RATING_CHANGE, loserMatchmakerChange, false);
 
                 // Arena lost => reset the win_rated_arena having the "no_lose" condition
                 player->ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_WIN_RATED_ARENA, ACHIEVEMENT_CRITERIA_CONDITION_NO_LOSE);
@@ -924,6 +925,8 @@ void Battleground::EndBattleground(uint32 winner)
 
         BlockMovement(player);
 
+        WorldPacket pvpLogData;
+        sBattlegroundMgr->BuildPvpLogDataPacket(&pvpLogData, this);
         player->SendDirectMessage(&pvpLogData);
 
         WorldPacket data;
@@ -1420,6 +1423,8 @@ void Battleground::UpdatePlayerScore(Player* Source, uint32 type, uint32 value, 
         case SCORE_HEALING_DONE:                            // Healing Done
             itr->second->HealingDone += value;
             break;
+        case SCORE_RATING_CHANGE:
+            itr->second->RatingChange += value;             // Rating Change
         default:
             SF_LOG_ERROR("bg.battleground", "Battleground::UpdatePlayerScore: unknown score type (%u) for BG (map: %u, instance id: %u)!",
                 type, m_MapId, m_InstanceID);

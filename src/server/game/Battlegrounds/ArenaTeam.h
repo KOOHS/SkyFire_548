@@ -115,7 +115,7 @@ class ArenaTeam
         ArenaTeam();
         ~ArenaTeam();
 
-        bool Create(uint64 captainGuid, uint8 type, std::string const& teamName,
+        bool Create(Group* grp, uint64 captainGuid, uint8 type, std::string const& teamName,
             uint32 backgroundColor, uint8 emblemStyle, uint32 emblemColor,
             uint8 borderStyle, uint32 borderColor);
         void Disband(WorldSession* session);
@@ -137,7 +137,7 @@ class ArenaTeam
 
         void SetCaptain(uint64 guid);
         bool SetName(std::string const& name);
-        bool AddMember(uint64 PlayerGuid);
+        bool AddMember(uint64 PlayerGuid, uint32 arenateamid);
         void DelMember(uint64 guid, bool cleanDb);
 
         size_t GetMembersSize() const         { return Members.size(); }

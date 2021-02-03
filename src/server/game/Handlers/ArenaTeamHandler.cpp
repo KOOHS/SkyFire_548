@@ -110,7 +110,7 @@ void WorldSession::HandleArenaTeamCreateOpcode(WorldPacket& recvData)
         SendArenaTeamCommandResult(ERR_ARENA_TEAM_CREATE_S, name, "", ERR_ARENA_TEAM_NAME_EXISTS_S);
         return;
     }*/
-
+    /*
     ArenaTeam* arenaTeam = new ArenaTeam;
     if (!arenaTeam->Create(GUID_LOPART(_player->GetGUID()), type, name, background, icon, iconcolor, border, bordercolor))
     {
@@ -120,7 +120,7 @@ void WorldSession::HandleArenaTeamCreateOpcode(WorldPacket& recvData)
     }
 
     sArenaTeamMgr->AddArenaTeam(arenaTeam);
-
+    */
     SendArenaTeamCommandResult(ERR_ARENA_TEAM_CREATE_S, name, "", ERR_ARENA_TEAM_CREATED);
 }
 
@@ -230,13 +230,14 @@ void WorldSession::HandleArenaTeamAcceptOpcode(WorldPacket& /*recvData*/)
         return;
     }
 
+    /*
     // Add player to team
     if (!arenaTeam->AddMember(_player->GetGUID()))
     {
         SendArenaTeamCommandResult(ERR_ARENA_TEAM_CREATE_S, "", "", ERR_ARENA_TEAM_INTERNAL);
         return;
     }
-
+    */
     // Broadcast event
     arenaTeam->BroadcastEvent(ERR_ARENA_TEAM_JOIN_SS, _player->GetGUID(), 2, _player->GetName(), arenaTeam->GetName(), "");
 }

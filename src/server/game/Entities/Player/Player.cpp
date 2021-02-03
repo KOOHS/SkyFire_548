@@ -7880,6 +7880,29 @@ uint8 Player::GetRankFromDB(uint64 guid)
     return 0;
 }
 
+void Player::UpdateArenaTeamIdInDB(uint64 guid, uint32 ateamId)
+{
+    PreparedStatement* stmt2 = CharacterDatabase.GetPreparedStatement(CHAR_UPD_ARENA_TEAM_ID_BY_PLAYER_GUID);
+    stmt2->setUInt32(0, ateamId);
+    //stmt->setUInt8(1, type);
+    stmt2->setUInt32(1, GUID_LOPART(guid));
+    CharacterDatabase.Execute(stmt2);
+}
+
+uint32 Player::GetArenaTeamFromDB(uint64 guid, uint8 type)
+{
+    PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_ARENA_TEAM_ID_BY_CAPTAIN_GUID);
+    stmt->setUInt32(0, GUID_LOPART(guid));
+    stmt->setUInt8(1, type);
+    PreparedQueryResult result = CharacterDatabase.Query(stmt);
+
+    if (!result)
+        return 0;
+
+    uint32 id = (*result)[0].GetUInt32();
+    return id;
+}
+
 uint32 Player::GetArenaTeamIdFromDB(uint64 guid, uint8 type)
 {
     PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_ARENA_TEAM_ID_BY_PLAYER_GUID);

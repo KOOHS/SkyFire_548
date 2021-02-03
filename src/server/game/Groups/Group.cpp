@@ -783,6 +783,11 @@ void Group::Disband(bool hideDestroy /* = false */)
         stmt->setUInt32(0, m_dbStoreId);
         CharacterDatabase.Execute(stmt);
 
+
+        stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_ARENA_TEAM_BY_ID);
+        stmt->setUInt32(0, m_dbStoreId);
+        CharacterDatabase.Execute(stmt);
+
         sGroupMgr->FreeGroupDbStoreId(this);
     }
 

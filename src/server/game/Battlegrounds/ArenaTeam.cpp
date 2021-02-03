@@ -42,7 +42,7 @@ ArenaTeam::ArenaTeam()
 ArenaTeam::~ArenaTeam()
 { }
 
-bool ArenaTeam::Create(uint64 captainGuid, uint8 type, std::string const& arenaTeamName,
+bool ArenaTeam::Create(Group* grp, uint64 captainGuid, uint8 type, std::string const& arenaTeamName,
     uint32 backgroundColor, uint8 emblemStyle, uint32 emblemColor,
     uint8 borderStyle, uint32 borderColor)
 {
@@ -55,7 +55,7 @@ bool ArenaTeam::Create(uint64 captainGuid, uint8 type, std::string const& arenaT
         return false;
 */
     // Generate new arena team id
-    TeamId = sArenaTeamMgr->GenerateArenaTeamId();
+    TeamId = grp->GetLowGUID();
 
     // Assign member variables
     CaptainGuid = captainGuid;
@@ -68,28 +68,30 @@ bool ArenaTeam::Create(uint64 captainGuid, uint8 type, std::string const& arenaT
     BorderColor = borderColor;
     uint32 captainLowGuid = GUID_LOPART(captainGuid);
 
-    // Save arena team to db
-    PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_ARENA_TEAM);
-    stmt->setUInt32(0, TeamId);
-    stmt->setString(1, TeamName);
-    stmt->setUInt32(2, captainLowGuid);
-    stmt->setUInt8(3, Type);
-    stmt->setUInt16(4, Stats.Rating);
-    stmt->setUInt32(5, BackgroundColor);
-    stmt->setUInt8(6, EmblemStyle);
-    stmt->setUInt32(7, EmblemColor);
-    stmt->setUInt8(8, BorderStyle);
-    stmt->setUInt32(9, BorderColor);
-    CharacterDatabase.Execute(stmt);
+    if (!Player::GetArenaTeamFromDB(CaptainGuid, GetType()))
+    {
+        // Save arena team to db
+        PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_ARENA_TEAM);
+        stmt->setUInt32(0, TeamId);
+        stmt->setString(1, TeamName);
+        stmt->setUInt32(2, captainLowGuid);
+        stmt->setUInt8(3, Type);
+        stmt->setUInt16(4, Stats.Rating);
+        stmt->setUInt32(5, BackgroundColor);
+        stmt->setUInt8(6, EmblemStyle);
+        stmt->setUInt32(7, EmblemColor);
+        stmt->setUInt8(8, BorderStyle);
+        stmt->setUInt32(9, BorderColor);
+        CharacterDatabase.Execute(stmt);
 
-    // Add captain as member
-    AddMember(CaptainGuid);
+        AddMember(CaptainGuid, TeamId);
+        SF_LOG_DEBUG("bg.arena", "New ArenaTeam created [Id: %u, Name: %s] [Type: %u] [Captain low GUID: %u]", GetId(), GetName().c_str(), GetType(), captainLowGuid);
+    }
 
-    SF_LOG_DEBUG("bg.arena", "New ArenaTeam created [Id: %u, Name: %s] [Type: %u] [Captain low GUID: %u]", GetId(), GetName().c_str(), GetType(), captainLowGuid);
     return true;
 }
 
-bool ArenaTeam::AddMember(uint64 playerGuid)
+bool ArenaTeam::AddMember(uint64 playerGuid, uint32 aTeamId)
 {
     std::string playerName;
     uint8 playerClass;
@@ -120,13 +122,6 @@ bool ArenaTeam::AddMember(uint64 playerGuid)
         playerClass = (*result)[1].GetUInt8();
     }
 
-    // Check if player is already in a similar arena team
-    if ((player && player->GetArenaTeamId(GetSlot())) || Player::GetArenaTeamIdFromDB(playerGuid, GetType()) != 0)
-    {
-        SF_LOG_DEBUG("bg.arena", "Arena: Player %s (guid: %u) already has an arena team of type %u", playerName.c_str(), GUID_LOPART(playerGuid), GetType());
-        return false;
-    }
-
     // Set player's personal rating
     uint32 personalRating = 0;
 
@@ -147,6 +142,8 @@ bool ArenaTeam::AddMember(uint64 playerGuid)
     else
         matchMakerRating = sWorld->getIntConfig(WorldIntConfigs::CONFIG_ARENA_START_MATCHMAKER_RATING);
 
+
+    
     // Remove all player signatures from other petitions
     // This will prevent player from joining too many arena teams and corrupt arena team data integrity
     Player::RemovePetitionsAndSigns(playerGuid, GetType());
@@ -164,12 +161,21 @@ bool ArenaTeam::AddMember(uint64 playerGuid)
     newMember.MatchMakerRating = matchMakerRating;
 
     Members.push_back(newMember);
-
-    // Save player's arena team membership to db
-    stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_ARENA_TEAM_MEMBER);
-    stmt->setUInt32(0, TeamId);
-    stmt->setUInt32(1, GUID_LOPART(playerGuid));
-    CharacterDatabase.Execute(stmt);
+    // Check if player is already in a similar arena team
+    if ((player && player->GetArenaTeamId(GetSlot())) || Player::GetArenaTeamIdFromDB(playerGuid, GetType()) != 0)
+    {
+        Player::UpdateArenaTeamIdInDB(playerGuid, aTeamId);
+        //SF_LOG_DEBUG("bg.arena", "Arena: Player %s (guid: %u) already has an arena team of type %u", playerName.c_str(), GUID_LOPART(playerGuid), GetType());
+        //return false;
+    }
+    else
+    {
+        // Save player's arena team membership to db
+        stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_ARENA_TEAM_MEMBER);
+        stmt->setUInt32(0, TeamId);
+        stmt->setUInt32(1, GUID_LOPART(playerGuid));
+        CharacterDatabase.Execute(stmt);
+    }
 
     // Inform player if online
     if (player)

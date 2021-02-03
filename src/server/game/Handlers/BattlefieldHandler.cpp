@@ -24,6 +24,8 @@
 #include "WorldSession.h"
 #include "Object.h"
 
+#include "ArenaTeam.h"
+#include "ArenaTeamMgr.h"
 #include "Battlefield.h"
 #include "BattlefieldMgr.h"
 #include "Opcodes.h"
@@ -315,18 +317,42 @@ void WorldSession::HandleBfExitRequest(WorldPacket& recvData)
 
 void WorldSession::HandleBattlefieldRatedInfoRequest(WorldPacket& recvData)
 {
-    WorldPacket data(SMSG_BATTLEFIELD_RATED_INFO, 4 * (8 * 4));
-    for (uint8 i = 0; i < 4; i++)
+
+    WorldPacket data(SMSG_BATTLEFIELD_RATED_INFO, 3 * (8 * 4));
+
+    SF_LOG_DEBUG("network", "MSG_INSPECT_ARENA_TEAMS");
+
+
+
+
+
+
+    for (uint8 i = 0; i < 3; ++i)
     {
-        //TODO: PLAYER_FIELD_PVP_INFO, Updatefield Data 8*3 = size 24
-        data << uint32(0);
-        data << uint32(0);
-        data << uint32(0);
-        data << uint32(0);
-        data << uint32(0);
-        data << uint32(0);
-        data << uint32(0);
-        data << uint32(0);
+        //TODO: PLAYER_FIELD_PVP_INFO, Updatefield Data 2fake + 6*4 = size 24
+        data << uint32(0); // FAKE?
+        data << uint32(0); // FAKE?
+        data << uint32(_player->GetUInt32Value(PLAYER_FIELD_PVP_INFO + (8 * i) + ARENA_TEAM_GAMES_SEASON)); // SeasonPlayed
+        data << uint32(_player->GetUInt32Value(PLAYER_FIELD_PVP_INFO + (8 * i) + ARENA_TEAM_PERSONAL_RATING)); // CurrentRating
+
+        data << uint32(_player->GetUInt32Value(PLAYER_FIELD_PVP_INFO + (8 * i) + ARENA_TEAM_GAMES_WEEK)); // WeeklyWins
+        data << uint32(_player->GetUInt32Value(PLAYER_FIELD_PVP_INFO + (8 * i) + ARENA_TEAM_PERSONAL_RATING)); //BestWeeklyRating
+
+        data << uint32(_player->GetUInt32Value(PLAYER_FIELD_PVP_INFO + (8 * i) + ARENA_TEAM_GAMES_WEEK)); //WeeklyPlayed
+        data << uint32(_player->GetUInt32Value(PLAYER_FIELD_PVP_INFO + (8 * i) + ARENA_TEAM_PERSONAL_RATING)); //BestSeasonRating
+        
+
+        /*
+        data << uint32(100); // -4
+        data << uint32(200); // 0 
+        data << uint32(300); // -3 SeasonPlayed
+        data << uint32(400); // -5 current 
+        data << uint32(500); // -2 WeeklyWINS
+        data << uint32(600); // v4[1] BestWeeklyRating
+        data << uint32(700); // -1 WeeklyPlayed
+        data << uint32(800); // v4[2] BestSeasonRating
+        */
     }
+
     SendPacket(&data);
 }

@@ -841,7 +841,7 @@ enum ArenaTeamInfoType
 {
     ARENA_TEAM_ID = 0,
     ARENA_TEAM_TYPE = 1,                       // new in 3.2 - team type?
-    ARENA_TEAM_MEMBER = 2,                       // 0 - captain, 1 - member
+    ARENA_TEAM_MEMBER = 2,                     // 0 - captain, 1 - member
     ARENA_TEAM_GAMES_WEEK = 3,
     ARENA_TEAM_GAMES_SEASON = 4,
     ARENA_TEAM_WINS_SEASON = 5,
@@ -2312,6 +2312,8 @@ class Player : public Unit, public GridObject<Player>
     void SendDeclineGuildInvitation(std::string declinerName, bool autoDecline = false);
     static void RemovePetitionsAndSigns(uint64 guid, uint32 type);
     // Arena Team
+    static void UpdateArenaTeamIdInDB(uint64 guid, uint32 ateamId);
+    static uint32 GetArenaTeamFromDB(uint64 guid, uint8 slot);
     static uint32 GetArenaTeamIdFromDB(uint64 guid, uint8 slot);
     static void LeaveAllArenaTeams(uint64 guid);
     void SetInArenaTeam(uint32 ArenaTeamId, uint8 slot, uint8 type);
